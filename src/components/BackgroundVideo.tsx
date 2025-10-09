@@ -14,7 +14,7 @@ import { auth, db } from "@/lib/firebase";
 import { ThemeKey } from "@/lib/themes";
 import { Button } from "@/components/ui/button";
 import Slideshow from "./Slideshow";
-import CrepeLoader from "./CrepeLoader";
+import CardSpinner from "./CardSpinner";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 const META_REF = doc(db, "siteSettingsEditable", SITE_KEY);
@@ -346,7 +346,7 @@ export default function BackgroundMedia() {
     <div className="fixed inset-0 top-12">
       {pendingButton}
       {renderMedia()}
-      {loading && <CrepeLoader />}
+      {loading && <CardSpinner />}
 
       {isAdmin && (
         <>
