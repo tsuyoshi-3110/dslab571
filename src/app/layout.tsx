@@ -115,6 +115,10 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
 
         {/* サーチコンソール用（複数可） */}
+        <meta
+          name="google-site-verification"
+          content="m1nk6ZGWhdsHa0z0csRVeztr0URzjROe8d8slTeMzE8"
+        />
       </head>
 
       <body className="relative min-h-[100dvh] flex flex-col">
