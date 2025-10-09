@@ -333,12 +333,17 @@ export default function Header({ className = "" }: { className?: string }) {
           }
         | undefined;
 
-      if (Array.isArray(data?.visibleMenuKeys) && data!.visibleMenuKeys!.length) {
+      if (
+        Array.isArray(data?.visibleMenuKeys) &&
+        data!.visibleMenuKeys!.length
+      ) {
         setVisibleMenuKeys(data!.visibleMenuKeys!);
       }
 
       const enabled =
-        typeof data?.i18n?.enabled === "boolean" ? (data!.i18n!.enabled as boolean) : true;
+        typeof data?.i18n?.enabled === "boolean"
+          ? (data!.i18n!.enabled as boolean)
+          : true;
       setI18nEnabled(enabled);
 
       // 未設定時は ja のみ、常に ja は含める
@@ -375,7 +380,9 @@ export default function Header({ className = "" }: { className?: string }) {
   /* ───────── i18n: 実際に使う言語（翻訳OFF時や許可外は日本語にフォールバック） ───────── */
   const effectiveLang: UILangType = useMemo(() => {
     const allow = new Set<UILangType>(
-      i18nEnabled ? (allowedLangs ?? (["ja"] as UILangType[])) : (["ja"] as UILangType[])
+      i18nEnabled
+        ? allowedLangs ?? (["ja"] as UILangType[])
+        : (["ja"] as UILangType[])
     );
     if (allow.has(uiLang)) return uiLang;
     return allow.has("ja" as UILangType)
@@ -474,7 +481,7 @@ export default function Header({ className = "" }: { className?: string }) {
           </SheetTrigger>
 
           {/* === シート === */}
-           <SheetContent
+          <SheetContent
             side="right"
             className={clsx(
               "flex h-dvh min-h-0 flex-col p-0",
@@ -558,16 +565,15 @@ export default function Header({ className = "" }: { className?: string }) {
                       </Link>
                     ))}
 
-                {(showAdminLink || isLoggedIn) &&
-                  visibleMenuKeys.includes("admin") && (
-                    <Link
-                      href="/login"
-                      onClick={handleMenuClose}
-                      className="text-center text-lg text-white text-outline"
-                    >
-                      {t.admin}
-                    </Link>
-                  )}
+                {(showAdminLink || isLoggedIn) && (
+                  <Link
+                    href="/login"
+                    onClick={handleMenuClose}
+                    className="text-center text-lg text-white text-outline"
+                  >
+                    {t.admin}
+                  </Link>
+                )}
               </div>
             </div>
           </SheetContent>
