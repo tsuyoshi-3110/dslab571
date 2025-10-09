@@ -1,7 +1,7 @@
 // app/layout.tsx
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
@@ -13,7 +13,7 @@ import FontLoader from "@/components/FontLoader";
 import SubscriptionOverlay from "@/components/SubscriptionOverlay";
 import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
-// ▼ カート全体提供（追加）
+// ▼ カート全体提供（必要ならオンに）
 import { CartProvider } from "@/lib/cart/CartContext";
 
 import {
@@ -50,6 +50,7 @@ export const metadata: Metadata = {
     "門真市",
     "三方よし",
   ],
+  alternates: { canonical: "https://d-s-lab-571.shop/" },
   openGraph: {
     title: "D.s.Lab｜段ボールの可能性を、もっと。",
     description:
@@ -58,14 +59,39 @@ export const metadata: Metadata = {
     siteName: "D.s.Lab",
     images: [
       {
-        url:  "https://d-s-lab-571.shop/images/ogpLogo.png?v=20251009",
+        url: "https://d-s-lab-571.shop/images/ogpLogo.png",
         width: 1200,
         height: 630,
+        alt: "D.s.Lab OGP",
       },
     ],
     locale: "ja_JP",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "D.s.Lab｜段ボールの可能性を、もっと。",
+    description:
+      "再生率90％以上の段ボールを用いて最適なパッケージ提案。創業50年の信頼と品質をお届けします。",
+    images: ["https://d-s-lab-571.shop/images/ogpLogo.png"],
+  },
+  // ▼ LINE等で小アイコン（favicon）が出るように必須
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/apple-touch-icon.png", // 180x180 推奨
+    shortcut: "/favicon.ico",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default function RootLayout({
@@ -106,14 +132,13 @@ export default function RootLayout({
           </>
         ) : null}
 
-        {/* 画像の先読み（壁紙） */}
+        {/* 壁紙の先読み（初回チラつき防止） */}
         <link
           rel="preload"
           as="image"
           href="/images/backImage.png"
           type="image/webp"
         />
-        <meta name="theme-color" content="#ffffff" />
 
         {/* サーチコンソール用（複数可） */}
         <meta
@@ -132,7 +157,7 @@ export default function RootLayout({
 
         {/* サイト全体をCartProviderでラップ */}
         <CartProvider>
-          {/* 上位オーバーレイ（サブスク状態によるブロック等） */}
+          {/* サブスク状態などによるオーバーレイ */}
           <SubscriptionOverlay siteKey={SITE_KEY} />
 
           {/* UI本体 */}
@@ -153,7 +178,7 @@ export default function RootLayout({
             "@type": "Store",
             name: "D.s.Lab",
             alternateName: "大光紙工",
-            url: "https://d-s-lab-571.shop",
+            url: "https://d-s-lab-571.shop/",
             image: "https://d-s-lab-571.shop/images/ogpLogo.png",
             description:
               "《売り手よし》《買い手よし》《世間よし》の三方よしの精神で、国内生産原紙を用い再生率90％以上の段ボールを製造・提案。創業50年の実績と信頼で「Made in Japan」の細やかさと品質をお届けします。",
