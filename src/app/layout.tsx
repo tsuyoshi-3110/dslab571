@@ -32,6 +32,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://d-s-lab-571.shop"),
   title: "D.s.Lab｜段ボールの可能性を、もっと。",
   description:
     "《売り手よし》《買い手よし》《世間よし》—三方よしの精神で、段ボールの可能性を拡げる D.s.Lab。大光紙工の国内生産原紙・再生率90％以上の段ボールで、時代のニーズに合わせた提案を行います。創業50年の実績と信頼で「Made in Japan」の細やかさと品質をお届けします。",
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
     siteName: "D.s.Lab",
     images: [
       {
-        url: "/ogpLogo.png",
+        url: "https://d-s-lab-571.shop/images/ogpLogo.png",
         width: 1200,
         height: 630,
       },
@@ -153,7 +154,7 @@ export default function RootLayout({
             name: "D.s.Lab",
             alternateName: "大光紙工",
             url: "https://d-s-lab-571.shop",
-            image: "/ogpLogo.png",
+            image: "https://d-s-lab-571.shop/images/ogpLogo.png",
             description:
               "《売り手よし》《買い手よし》《世間よし》の三方よしの精神で、国内生産原紙を用い再生率90％以上の段ボールを製造・提案。創業50年の実績と信頼で「Made in Japan」の細やかさと品質をお届けします。",
             slogan:

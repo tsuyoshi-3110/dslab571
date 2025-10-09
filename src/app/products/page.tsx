@@ -5,7 +5,7 @@ import ProductsClient from "@/components/ProductsClient";
 const title = "製品一覧｜D.s.Lab";
 const description =
   "D.s.Lab の段ボール・パッケージ製品一覧。国内生産原紙を用いた再生率90％以上の段ボールで、用途やサイズに合わせた最適な提案を行います。";
-const ogImage = "/ogpLogo.png"; // public 配下の画像
+const ogImage = "https://d-s-lab-571.shop/images/ogpLogo.png"; // public 配下の画像
 
 export const metadata: Metadata = {
   title,
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title,
     description,
-    url: "https://d-s-lab-571.shop/products",
+    url: "https://d-s-lab-571.shop/images/ogpLogo.png",
     siteName: "D.s.Lab",
     images: [
       {

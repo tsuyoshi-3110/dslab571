@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     siteName: "D.s.Lab",
     images: [
       {
-        url: "/ogpLogo.png",
+        url: "https://d-s-lab-571.shop/images/ogpLogo.png",
         width: 1200,
         height: 630,
       },

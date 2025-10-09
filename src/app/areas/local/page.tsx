@@ -13,7 +13,7 @@ export const metadata: Metadata = {
       "段ボールで作る各種クラフトの記録ページ。試作中心のため内容は予告なく変更・削除される場合があります。",
     url: "https://d-s-lab-571.shop/areas/kadoma",
     type: "article",
-    images: [{ url: "/ogpLogo.png", width: 1200, height: 630 }],
+    images: [{ url: "https://d-s-lab-571.shop/images/ogpLogo.png", width: 1200, height: 630 }],
     locale: "ja_JP",
     siteName: "D.s.Lab",
   },
