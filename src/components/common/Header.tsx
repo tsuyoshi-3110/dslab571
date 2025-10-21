@@ -394,12 +394,12 @@ export default function Header({ className = "" }: { className?: string }) {
   const rtl = effectiveLang === "ar";
 
   /* 管理者リンクの3タップ */
-  const [showAdminLink, setShowAdminLink] = useState(false);
+  // const [showAdminLink, setShowAdminLink] = useState(false);
   const tapCountRef = useRef(0);
   const lastTapAtRef = useRef(0);
   useEffect(() => {
     if (!open) {
-      setShowAdminLink(false);
+      // setShowAdminLink(false);
       tapCountRef.current = 0;
       lastTapAtRef.current = 0;
     }
@@ -418,7 +418,7 @@ export default function Header({ className = "" }: { className?: string }) {
     tapCountRef.current += 1;
     lastTapAtRef.current = now;
     if (tapCountRef.current >= 3) {
-      setShowAdminLink(true);
+      // setShowAdminLink(true);
       tapCountRef.current = 0;
       lastTapAtRef.current = 0;
     }
@@ -565,15 +565,13 @@ export default function Header({ className = "" }: { className?: string }) {
                       </Link>
                     ))}
 
-                {(showAdminLink || isLoggedIn) && (
-                  <Link
-                    href="/login"
-                    onClick={handleMenuClose}
-                    className="text-center text-lg text-white text-outline"
-                  >
-                    {t.admin}
-                  </Link>
-                )}
+                <Link
+                  href="/login"
+                  onClick={handleMenuClose}
+                  className="text-center text-lg text-white text-outline"
+                >
+                  {t.admin}
+                </Link>
               </div>
             </div>
           </SheetContent>
