@@ -8,8 +8,7 @@ import {
   useRef,
   useState,
   useMemo,
-  type MouseEvent,
-  type TouchEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useOnScreen } from "@/lib/useOnScreen";
 
@@ -43,8 +42,6 @@ function normalizeItems(src: Src, type: MediaType, items?: MediaItem[]) {
   }
   return [{ src, type }];
 }
-
-type NavEvent = MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>;
 
 export default function ProductMedia({
   src,
@@ -121,7 +118,7 @@ export default function ProductMedia({
   }, [autoPlay, total, isVideoSlide]);
 
   /* =======================
-     ナビゲーション
+     ナビゲーション（ロジック）
   ======================= */
   const goTo = (idx: number) => {
     if (total <= 1) return;
@@ -129,29 +126,28 @@ export default function ProductMedia({
     setCurrentIndex(next);
   };
 
-  const handlePrev = (e: NavEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const goPrev = () => {
     goTo(currentIndex - 1);
   };
 
-  const handleNext = (e: NavEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const goNext = () => {
     goTo(currentIndex + 1);
   };
 
-  const handleDotClick = (e: NavEvent, idx: number) => {
+  const goDot = (idx: number) => {
+    goTo(idx);
+  };
+
+  const stopEvent = (e: ReactPointerEvent<HTMLElement>) => {
     e.stopPropagation();
     e.preventDefault();
-    goTo(idx);
   };
 
   // 動画再生が終わったら、ループしない場合は次のスライドへ
   const handleVideoEnded = () => {
     if (!autoPlay) return;
     if (total <= 1) return;
-    goTo(currentIndex + 1);
+    goNext();
   };
 
   /* =======================
@@ -164,7 +160,7 @@ export default function ProductMedia({
     <div
       ref={ref}
       className={clsx(
-        "relative w-full aspect-square overflow-hidden",
+        "relative w-full aspect-square overflow-hidden touch-pan-y",
         className
       )}
     >
@@ -225,31 +221,63 @@ export default function ProductMedia({
       {/* スライドナビ（画像・動画共通） */}
       {total > 1 && (
         <>
-          <button
-            type="button"
-            onClick={handlePrev}
-            onTouchStart={handlePrev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 text-white w-10 h-10 flex items-center justify-center text-2xl leading-none pointer-events-auto"
+          {/* 左矢印：div + pointer events */}
+          <div
+            role="button"
+            aria-label="Previous image"
+            tabIndex={0}
+            onClick={(e) => {
+              // PC クリック
+              stopEvent(e as unknown as ReactPointerEvent<HTMLElement>);
+              goPrev();
+            }}
+            onPointerDown={(e) => {
+              // スマホタップ含む
+              stopEvent(e);
+              goPrev();
+            }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/60 text-white w-12 h-12 flex items-center justify-center text-3xl leading-none"
           >
             ‹
-          </button>
-          <button
-            type="button"
-            onClick={handleNext}
-            onTouchStart={handleNext}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 text-white w-10 h-10 flex items-center justify-center text-2xl leading-none pointer-events-auto"
+          </div>
+
+          {/* 右矢印 */}
+          <div
+            role="button"
+            aria-label="Next image"
+            tabIndex={0}
+            onClick={(e) => {
+              stopEvent(e as unknown as ReactPointerEvent<HTMLElement>);
+              goNext();
+            }}
+            onPointerDown={(e) => {
+              stopEvent(e);
+              goNext();
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/60 text-white w-12 h-12 flex items-center justify-center text-3xl leading-none"
           >
             ›
-          </button>
-          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1 z-20 pointer-events-none">
+          </div>
+
+          {/* ドットインジケーター */}
+          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-2 z-20">
             {slides.map((_, i) => (
-              <button
+              <div
                 key={i}
-                type="button"
-                onClick={(e) => handleDotClick(e, i)}
-                onTouchStart={(e) => handleDotClick(e, i)}
+                role="button"
+                aria-label={`Go to image ${i + 1}`}
+                tabIndex={0}
+                onClick={(e) => {
+                  stopEvent(e as unknown as ReactPointerEvent<HTMLElement>);
+                  goDot(i);
+                }}
+                onPointerDown={(e) => {
+                  stopEvent(e);
+                  goDot(i);
+                }}
                 className={clsx(
-                  "w-2.5 h-2.5 rounded-full transition-opacity pointer-events-auto",
+                  "w-3 h-3 rounded-full",
+                  "transition-opacity",
                   i === safeIndex
                     ? "bg-white"
                     : "bg-white/50 hover:bg-white/80"
