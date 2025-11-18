@@ -21,21 +21,17 @@ type MediaItem = {
 };
 
 interface Props {
-  /** 互換用：単枚表示の src */
   src: Src;
-  /** 互換用：単枚表示の type */
   type: MediaType;
-  /** スライド用：画像1〜3枚 + 動画1つまで */
   items?: MediaItem[];
 
   className?: string;
-  autoPlay?: boolean; // 既定: true（自動スライドON/OFF用）
-  loop?: boolean; // 既定: true（動画のみで使用・ただし ended でスライド）
-  muted?: boolean; // 既定: true（動画用）
+  autoPlay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
   alt?: string;
 }
 
-/** items があればそれを優先。なければ旧来の単枚 src/type を1枚目として使う */
 function normalizeItems(src: Src, type: MediaType, items?: MediaItem[]) {
   if (Array.isArray(items) && items.length > 0) {
     return items.filter((m) => m && m.src);
@@ -53,7 +49,6 @@ export default function ProductMedia({
   alt = "",
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  // 画面に入る少し前からプリロードを始めたいので rootMargin を広めに
   const [ref, visible] = useOnScreen<HTMLDivElement>("600px");
 
   const slides = useMemo(
@@ -69,14 +64,8 @@ export default function ProductMedia({
   const isVideoSlide = active.type === "video";
   const isSingleVideo = total === 1 && active.type === "video";
 
-  // 全スライド分の video ref を持つ
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
 
-  /* =======================
-     VIDEO 再生制御
-     - 可視範囲 & アクティブな動画だけ再生
-     - それ以外の動画は停止
-  ======================= */
   useEffect(() => {
     videoRefs.current.forEach((video, index) => {
       if (!video) return;
@@ -84,83 +73,56 @@ export default function ProductMedia({
 
       if (visible && index === safeIndex && slide?.type === "video") {
         const p = video.play();
-        if (p && typeof p.catch === "function") {
-          p.catch(() => {
-            // モバイルの自動再生制限などは無視
-          });
-        }
+        if (p && typeof p.catch === "function") p.catch(() => {});
       } else {
         video.pause();
       }
     });
   }, [visible, safeIndex, slides]);
 
-  /* =======================
-     自動スライド
-     👉 動画がアクティブなときは動かさない
-  ======================= */
   useEffect(() => {
     if (!autoPlay) return;
     if (total <= 1) return;
-    if (isVideoSlide) return; // 動画スライド中は自動スライドしない
+    if (isVideoSlide) return;
 
     const id = window.setInterval(() => {
       setCurrentIndex((prev) => {
         const next = prev + 1;
-        if (total <= 0) return 0;
-        return next >= total ? 0 : next;
+        return total <= 0 ? 0 : next >= total ? 0 : next;
       });
-    }, 3500); // 3.5秒ごとにスライド
+    }, 3500);
 
     return () => {
       window.clearInterval(id);
     };
   }, [autoPlay, total, isVideoSlide]);
 
-  /* =======================
-     ナビゲーション（ロジック）
-  ======================= */
   const goTo = (idx: number) => {
     if (total <= 1) return;
     const next = ((idx % total) + total) % total;
     setCurrentIndex(next);
   };
 
-  const goPrev = () => {
-    goTo(currentIndex - 1);
-  };
-
-  const goNext = () => {
-    goTo(currentIndex + 1);
-  };
-
-  const goDot = (idx: number) => {
-    goTo(idx);
-  };
+  const goPrev = () => goTo(currentIndex - 1);
+  const goNext = () => goTo(currentIndex + 1);
+  const goDot = (idx: number) => goTo(idx);
 
   const stopEvent = (e: ReactPointerEvent<HTMLElement>) => {
     e.stopPropagation();
     e.preventDefault();
   };
 
-  // 動画再生が終わったら、ループしない場合は次のスライドへ
   const handleVideoEnded = () => {
     if (!autoPlay) return;
     if (total <= 1) return;
     goNext();
   };
 
-  /* =======================
-     スライダー表示
-     - flex で横並び
-     - translateX で左にスライド
-     - 背景が一瞬見えないように連続表示
-  ======================= */
   return (
     <div
       ref={ref}
       className={clsx(
-        "relative w-full aspect-square overflow-hidden touch-pan-y",
+        "relative z-[1] w-full aspect-square overflow-hidden touch-pan-y",
         className
       )}
     >
@@ -180,10 +142,7 @@ export default function ProductMedia({
               : (slide.src as StaticImageData).src;
 
           return (
-            <div
-              key={key + index}
-              className="relative w-full h-full flex-shrink-0"
-            >
+            <div key={key + index} className="relative w-full h-full flex-shrink-0">
               {slide.type === "video" ? (
                 <video
                   ref={(el) => {
@@ -197,7 +156,7 @@ export default function ProductMedia({
                   className="absolute inset-0 w-full h-full object-cover"
                   playsInline
                   muted={muted}
-                  autoPlay={false} // 再生は useEffect 側で制御
+                  autoPlay={false}
                   loop={isSingleVideo}
                   preload={visible ? "auto" : "metadata"}
                   onEnded={handleVideoEnded}
@@ -218,25 +177,22 @@ export default function ProductMedia({
         })}
       </div>
 
-      {/* スライドナビ（画像・動画共通） */}
       {total > 1 && (
         <>
-          {/* 左矢印：div + pointer events */}
+          {/* 左矢印 */}
           <div
             role="button"
             aria-label="Previous image"
             tabIndex={0}
             onClick={(e) => {
-              // PC クリック
               stopEvent(e as unknown as ReactPointerEvent<HTMLElement>);
               goPrev();
             }}
             onPointerDown={(e) => {
-              // スマホタップ含む
               stopEvent(e);
               goPrev();
             }}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/60 text-white w-12 h-12 flex items-center justify-center text-3xl leading-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-[9999] rounded-full bg-black/60 text-white w-12 h-12 flex items-center justify-center text-3xl leading-none"
           >
             ‹
           </div>
@@ -254,13 +210,13 @@ export default function ProductMedia({
               stopEvent(e);
               goNext();
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/60 text-white w-12 h-12 flex items-center justify-center text-3xl leading-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-[9999] rounded-full bg-black/60 text-white w-12 h-12 flex items-center justify-center text-3xl leading-none"
           >
             ›
           </div>
 
-          {/* ドットインジケーター */}
-          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-2 z-20">
+          {/* ドット */}
+          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-2 z-[9999]">
             {slides.map((_, i) => (
               <div
                 key={i}
@@ -278,9 +234,7 @@ export default function ProductMedia({
                 className={clsx(
                   "w-3 h-3 rounded-full",
                   "transition-opacity",
-                  i === safeIndex
-                    ? "bg-white"
-                    : "bg-white/50 hover:bg-white/80"
+                  i === safeIndex ? "bg-white" : "bg-white/50 hover:bg-white/80"
                 )}
               />
             ))}
