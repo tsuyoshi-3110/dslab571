@@ -170,15 +170,12 @@ function buildSimpleEmbedSrc(input?: string | null) {
   const s = (input ?? "").trim();
   if (!s) return undefined;
 
+  // すでに埋め込みURLならそのまま
   if (/^https?:\/\/www\.google\.[^/]+\/maps\/embed\/?/i.test(s)) {
     return s;
   }
-  const key = process.env.NEXT_PUBLIC_MAPS_EMBED_KEY;
-  if (key) {
-    return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${encodeURIComponent(
-      s
-    )}`;
-  }
+
+  // 住所や通常URL → すべてキーなしの embed に統一
   return `https://www.google.com/maps?q=${encodeURIComponent(s)}&output=embed`;
 }
 
