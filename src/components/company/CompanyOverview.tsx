@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import Image from "next/image";
+import NextImage from "next/image";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { useUILang } from "@/lib/atoms/uiLangAtom";
+import VideoCropperModal from "@/components/media/VideoCropperModal";
 
 /* ========= Firebase App 安全初期化 ========= */
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import {
   getFirestore,
   doc,
@@ -43,6 +44,8 @@ import {
   deleteObject,
 } from "firebase/storage";
 
+import ImageCropperModal from "../media/ImageCropperModal";
+
 /* ========= Firebase Config（.env から） ========= */
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -51,6 +54,25 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
+// 追加：見出し「会社概要」の多言語マップ
+const COMPANY_OVERVIEW_T = {
+  ja: "会社概要",
+  en: "Company Overview",
+  zh: "公司概况",
+  "zh-TW": "公司概況",
+  ko: "회사 개요",
+  fr: "Présentation de l’entreprise",
+  es: "Información de la empresa",
+  de: "Unternehmensübersicht",
+  pt: "Visão geral da empresa",
+  it: "Panoramica aziendale",
+  ru: "Обзор компании",
+  th: "ภาพรวมบริษัท",
+  vi: "Tổng quan công ty",
+  id: "Gambaran Perusahaan",
+  hi: "कंपनी का परिचय",
+  ar: "نظرة عامة على الشركة",
+} as const;
 
 /* ========= 言語リスト（ja は base として保持） ========= */
 const LANGS = [
@@ -170,12 +192,15 @@ function buildSimpleEmbedSrc(input?: string | null) {
   const s = (input ?? "").trim();
   if (!s) return undefined;
 
-  // すでに埋め込みURLならそのまま
   if (/^https?:\/\/www\.google\.[^/]+\/maps\/embed\/?/i.test(s)) {
     return s;
   }
-
-  // 住所や通常URL → すべてキーなしの embed に統一
+  const key = process.env.NEXT_PUBLIC_MAPS_EMBED_KEY;
+  if (key) {
+    return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${encodeURIComponent(
+      s
+    )}`;
+  }
   return `https://www.google.com/maps?q=${encodeURIComponent(s)}&output=embed`;
 }
 
@@ -211,9 +236,7 @@ function urlToStoragePath(url: string | null | undefined): string | null {
 function readBaseFromDoc(
   d: CompanyDoc | null | undefined
 ): Required<TranslatableFields> {
-  // ← 部分型を明示
   const base: Partial<TranslatableFields> = d?.base ?? {};
-
   return {
     name: String(base.name ?? d?.name ?? ""),
     tagline: (base.tagline ?? d?.tagline ?? "") || "",
@@ -341,9 +364,11 @@ function InlineMediaViewer({
             autoPlay
             muted
             playsInline
+            loop
+            controls
           />
         ) : (
-          <Image
+          <NextImage
             src={url ?? ""}
             alt="company-hero"
             fill
@@ -372,7 +397,15 @@ function InlineMediaEditor({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // 60秒以内チェック
+  // 画像クロッパー
+  const [imgCropOpen, setImgCropOpen] = useState(false);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+
+  // 動画クロッパー（ffmpeg.wasm）
+  const [videoCropOpen, setVideoCropOpen] = useState(false);
+  const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null);
+
+  // 60秒以内チェック（必要なければ外してください）
   const getVideoDuration = (file: File) =>
     new Promise<number>((resolve, reject) => {
       const url = URL.createObjectURL(file);
@@ -468,13 +501,40 @@ function InlineMediaEditor({
     }
   };
 
-  // FileList → 配列化（イベント解放後も安全）
+  // HEIC/HEIF → JPEG 変換
+  const convertIfHeic = async (f: File): Promise<File> => {
+    if (typeof window === "undefined") return f;
+    const isHeic =
+      f.type === "image/heic" ||
+      f.type === "image/heif" ||
+      /\.heic$/i.test(f.name);
+    if (!isHeic) return f;
+    const heic2any = (await import("heic2any")).default as any;
+    const blob = (await heic2any({ blob: f, toType: "image/jpeg" })) as Blob;
+    return new File([blob], f.name.replace(/\.[^.]+$/, ".jpg"), {
+      type: "image/jpeg",
+    });
+  };
+
   const onFilesArray = async (files: File[]) => {
     if (!files.length) return;
-    const file = files[0];
+    let file = files[0];
+
+    // iPhone 対策：HEIC/HEIF を先に JPEG へ
+    file = await convertIfHeic(file);
+
     const kind = await validateFile(file);
     if (!kind) return;
-    await doUpload(file, kind);
+
+    if (kind === "image") {
+      setPendingImageFile(file);
+      setImgCropOpen(true);
+      return;
+    }
+
+    // 動画は先にトリミング（スマホ完結）
+    setPendingVideoFile(file);
+    setVideoCropOpen(true);
   };
 
   const onDrop: React.DragEventHandler<HTMLDivElement> = async (e) => {
@@ -516,8 +576,62 @@ function InlineMediaEditor({
     }
   };
 
+  // 画像クロップ確定：Blob → File にしてアップロード
+  const handleImageCropped = async (blob: Blob) => {
+    if (!pendingImageFile) return;
+    setImgCropOpen(false);
+    const ext = pendingImageFile.name.split(".").pop() || "jpg";
+    const name =
+      pendingImageFile.name.replace(/\.[^.]+$/, "") + "_cropped." + ext;
+    const file = new File([blob], name, {
+      type: pendingImageFile.type || "image/jpeg",
+    });
+    setPendingImageFile(null);
+    await doUpload(file, "image");
+  };
+
+  // 動画クロップ確定：Blob → File にしてアップロード
+  const handleVideoCropped = async (blob: Blob) => {
+    if (!pendingVideoFile) return;
+    setVideoCropOpen(false);
+    const name = pendingVideoFile.name.replace(/\.[^.]+$/, "") + "_cropped.mp4";
+    const file = new File([blob], name, {
+      type: "video/mp4",
+      lastModified: Date.now(),
+    });
+    setPendingVideoFile(null);
+    await doUpload(file, "video");
+  };
+
   return (
-    <div className="px-6 md:px-8 pb-2 bg-white/50 backdrop-blur-md rounded">
+    <div className="px-6 md:px-8 pb-2">
+      {/* 画像クロップモーダル（1:1） */}
+      {pendingImageFile && (
+        <ImageCropperModal
+          file={pendingImageFile}
+          open={imgCropOpen}
+          title="画像のトリミング（1:1）"
+          onCancel={() => {
+            setImgCropOpen(false);
+            setPendingImageFile(null);
+          }}
+          onCropped={handleImageCropped}
+        />
+      )}
+
+      {/* 動画クロップモーダル（1:1 / ffmpeg.wasm 書き出し） */}
+      {pendingVideoFile && (
+        <VideoCropperModal
+          open={videoCropOpen}
+          file={pendingVideoFile}
+          onCancel={() => {
+            setVideoCropOpen(false);
+            setPendingVideoFile(null);
+          }}
+          onCropped={handleVideoCropped}
+        />
+      )}
+
       <div
         className={[
           "relative w-full overflow-hidden rounded border bg-slate-100",
@@ -535,7 +649,7 @@ function InlineMediaEditor({
           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
             <Upload className="h-8 w-8 mb-2" />
             <div className="text-xs mt-1">
-              画像または60秒以内の動画（最大200MB）
+              画像（トリミング可）または60秒以内の動画（最大200MB）
             </div>
           </div>
         ) : data.heroMediaType === "video" ? (
@@ -545,9 +659,11 @@ function InlineMediaEditor({
             autoPlay
             muted
             playsInline
+            loop
+            controls
           />
         ) : (
-          <Image
+          <NextImage
             src={data.heroMediaUrl ?? ""}
             alt="company-hero"
             fill
@@ -593,7 +709,8 @@ function InlineMediaEditor({
       </div>
 
       <p className="mt-2 text-xs text-white text-outline">
-        ※ タイトル下のメディアは保存後に公開画面へ反映。
+        ※ 画像・動画ともにアップロード前に 1:1
+        でトリミングできます（動画は端末内で再エンコード）。
       </p>
     </div>
   );
@@ -712,7 +829,7 @@ function AiGenerateModal({
             <Wand2 className="h-5 w-5 text-purple-600" />
             {target === "about" ? "会社説明をAIで生成" : "事業内容をAIで生成"}
           </h3>
-          <p className="text-xs  text-white text-outline mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             キーワードを最大3つまで入力（1つ以上で開始可能）
           </p>
         </div>
@@ -757,7 +874,6 @@ async function translateCompany(
   base: Required<TranslatableFields>,
   target: LangKey
 ): Promise<TranslatedPack> {
-  // name / tagline / about / business[n]... / address
   const SEP = "\n---\n";
   type Item =
     | { kind: "name" }
@@ -813,7 +929,6 @@ async function translateCompany(
     }
   }
 
-  // 末尾の空要素除去
   if (Array.isArray(out.business)) {
     out.business = (out.business ?? []).map((s) => String(s ?? ""));
   }
@@ -871,6 +986,9 @@ export default function CompanyOverview() {
     heroMediaType: null,
   });
   const [isEditing, setIsEditing] = useState(false);
+  const headingText =
+    COMPANY_OVERVIEW_T[(uiLang as keyof typeof COMPANY_OVERVIEW_T) ?? "ja"] ??
+    COMPANY_OVERVIEW_T.ja;
 
   // ログイン監視
   useEffect(() => {
@@ -1050,6 +1168,9 @@ export default function CompanyOverview() {
 
   return (
     <div className="max-w-5xl mx-auto">
+      <h1 className="text-3xl font-semibold text-white text-outline mb-4">
+        {headingText}
+      </h1>
       {/* ===== 会社概要カード ===== */}
       <div className="relative rounded bg-white/10 backdrop-blur-md shadow-xl border border-white/50 ring-1 ring-black/5 p-0 overflow-hidden">
         {saving && <CardSpinner />}
@@ -1091,7 +1212,7 @@ export default function CompanyOverview() {
         {/* ヘッダー帯（タイトル） */}
         <div className="px-6 md:px-8 pb-4 pt-2 text-slate-900">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded bg-white/60 flex items-center justify-center ring-1 ring-black/5">
+            <div className="h-10 w-10 rounded bg白/60 flex items-center justify-center ring-1 ring-black/5">
               <Building2 className="h-6 w-6 text-slate-700" />
             </div>
             <div>
@@ -1345,7 +1466,7 @@ function EditView({
   return (
     <div className="space-y-8">
       {/* 必須は会社名のみ（原文=ja） */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4 ">
         <LabeledInput
           label="会社名 *"
           value={base.name}
@@ -1440,7 +1561,7 @@ function EditView({
 
       {/* 事業内容（自動伸縮 / 空行・末尾改行を保持） */}
       <div className="space-y-2">
-        <div className="text-sm text-white text-outline">
+        <div className="text-sm text白 text-outline">
           事業内容（任意・翻訳対象 / 1行につき1項目 / 空行OK）
         </div>
         <AutoResizeTextarea
@@ -1453,7 +1574,7 @@ function EditView({
           placeholder={"例：\n主要サービスA\nCMS構築\n運用サポート\n"}
           className="bg-white/80"
         />
-        <p className="text-xs  text-white text-outline">
+        <p className="text-xs text白 text-outline">
           ※ Enter
           での空行や、最後の改行も保持されます（閲覧表示では空行は表示されません）。
         </p>
@@ -1467,7 +1588,7 @@ function EditView({
           onChange={(v) => onCommonChange({ ...common, mapEmbedUrl: v })}
           placeholder="https://www.google.com/maps/embed?..."
         />
-        <div className="mt-2 text-xs  text-white text-outline">
+        <div className="mt-2 text-xs text白 text-outline">
           ※
           短縮URL（maps.app.goo.gl）や通常URLでもOK。自動で埋め込み形式に変換します。
         </div>
