@@ -8,7 +8,8 @@ import {
   useRef,
   useState,
   useMemo,
-  MouseEvent,
+  type MouseEvent,
+  type TouchEvent,
 } from "react";
 import { useOnScreen } from "@/lib/useOnScreen";
 
@@ -30,8 +31,8 @@ interface Props {
 
   className?: string;
   autoPlay?: boolean; // 既定: true（自動スライドON/OFF用）
-  loop?: boolean;     // ※未使用（動画は isSingleVideo で制御）
-  muted?: boolean;    // 既定: true（動画用）
+  loop?: boolean; // 既定: true（動画のみで使用・ただし ended でスライド）
+  muted?: boolean; // 既定: true（動画用）
   alt?: string;
 }
 
@@ -42,6 +43,8 @@ function normalizeItems(src: Src, type: MediaType, items?: MediaItem[]) {
   }
   return [{ src, type }];
 }
+
+type NavEvent = MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>;
 
 export default function ProductMedia({
   src,
@@ -126,18 +129,21 @@ export default function ProductMedia({
     setCurrentIndex(next);
   };
 
-  const handlePrev = (e: MouseEvent) => {
+  const handlePrev = (e: NavEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     goTo(currentIndex - 1);
   };
 
-  const handleNext = (e: MouseEvent) => {
+  const handleNext = (e: NavEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     goTo(currentIndex + 1);
   };
 
-  const handleDotClick = (e: MouseEvent, idx: number) => {
+  const handleDotClick = (e: NavEvent, idx: number) => {
     e.stopPropagation();
+    e.preventDefault();
     goTo(idx);
   };
 
@@ -165,7 +171,7 @@ export default function ProductMedia({
       <div
         className={clsx(
           "flex h-full w-full",
-          "transition-transform duration-500 ease-out" // ← 左にスライド＆右から出てくる
+          "transition-transform duration-500 ease-out"
         )}
         style={{
           transform: `translateX(-${safeIndex * 100}%)`,
@@ -195,8 +201,7 @@ export default function ProductMedia({
                   className="absolute inset-0 w-full h-full object-cover"
                   playsInline
                   muted={muted}
-                  // 自動再生は useEffect 側で制御
-                  autoPlay={false}
+                  autoPlay={false} // 再生は useEffect 側で制御
                   loop={isSingleVideo}
                   preload={visible ? "auto" : "metadata"}
                   onEnded={handleVideoEnded}
@@ -223,25 +228,28 @@ export default function ProductMedia({
           <button
             type="button"
             onClick={handlePrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/40 text-white w-8 h-8 flex items-center justify-center text-lg"
+            onTouchStart={handlePrev}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 text-white w-10 h-10 flex items-center justify-center text-2xl leading-none pointer-events-auto"
           >
             ‹
           </button>
           <button
             type="button"
             onClick={handleNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/40 text-white w-8 h-8 flex items-center justify-center text-lg"
+            onTouchStart={handleNext}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 text-white w-10 h-10 flex items-center justify-center text-2xl leading-none pointer-events-auto"
           >
             ›
           </button>
-          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1 z-10">
+          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1 z-20 pointer-events-none">
             {slides.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={(e) => handleDotClick(e, i)}
+                onTouchStart={(e) => handleDotClick(e, i)}
                 className={clsx(
-                  "w-2 h-2 rounded-full transition-opacity",
+                  "w-2.5 h-2.5 rounded-full transition-opacity pointer-events-auto",
                   i === safeIndex
                     ? "bg-white"
                     : "bg-white/50 hover:bg-white/80"
