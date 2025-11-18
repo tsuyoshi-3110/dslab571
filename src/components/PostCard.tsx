@@ -120,7 +120,7 @@ export default function PostCard({ post }: { post: Post }) {
               <span>
                 {dayjs(post.createdAt?.toDate()).format("MM/DD HH:mm")}
               </span>
-              <LikeButton postId={post.id} count={post.likeCount ?? 0} />
+              <LikeButton postId={post.id} initialLikeCount={post.likeCount ?? 0} />
             </div>
           </div>
         </div>

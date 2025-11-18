@@ -8,9 +8,9 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
-/* アプリ側で持っている siteKey に差し替えてください */
-const SITE_KEY = "dslab571";
+
 
 export default function ReplyForm({
   postId,
@@ -67,7 +67,7 @@ export default function ReplyForm({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="返信を入力"
-        className="w-full border rounded p-2"
+        className="w-full bg-gray-100 border rounded p-2"
       />
       <button
         onClick={handleSubmit}

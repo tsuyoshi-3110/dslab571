@@ -192,15 +192,17 @@ function buildSimpleEmbedSrc(input?: string | null) {
   const s = (input ?? "").trim();
   if (!s) return undefined;
 
-  // すでにGoogle公式の埋め込みURLを入れてる場合はそのまま使う
-  if (s.includes("/maps/embed")) {
+  if (/^https?:\/\/www\.google\.[^/]+\/maps\/embed\/?/i.test(s)) {
     return s;
   }
-
-  // ここ！！ → APIなしフォールバックに統一
+  const key = process.env.NEXT_PUBLIC_MAPS_EMBED_KEY;
+  if (key) {
+    return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${encodeURIComponent(
+      s
+    )}`;
+  }
   return `https://www.google.com/maps?q=${encodeURIComponent(s)}&output=embed`;
 }
-
 
 /** CompanyProfile から埋め込みURLを決定（mapEmbedUrl 優先、なければ address → name） */
 function computeMapEmbedSrc(data: {
