@@ -81,7 +81,7 @@ function createSite(overrides: SiteOverrides) {
     description: overrides.description,
     keywords: overrides.keywords as readonly string[],
     tel: overrides.tel ?? "",
-    logoPath: overrides.logoPath ?? "/ogpLogo.png",
+    logoPath: overrides.logoPath ?? "/images/ogpLogo.png",
     googleSiteVerification: overrides.googleSiteVerification ?? "",
     socials: {
       instagram: overrides.socials?.instagram ?? "",
@@ -116,7 +116,7 @@ const SITE_OVERRIDES: SiteOverrides = {
     "門真市",
   ],
   tel: "+81 72-882-0154",
-  logoPath: "/ogpLogo.png",
+  logoPath: "/images/ogpLogo.png",
   googleSiteVerification: "",
   socials: {
     instagram: "",
@@ -947,8 +947,7 @@ export const copy: Record<string, CopyBundle> = {
     stores: {
       heroTitle: `${site.name} ─ ข้อมูลบริษัท`,
       heroAreas: "เมืองคะโดะมะ จังหวัดโอซาก้า (ญี่ปุ่น)",
-      heroLead:
-        "ออกแบบและผลิตกล่องกระดาษลูกฟูกและวัสดุบรรจุภัณฑ์ตามสั่ง.",
+      heroLead: "ออกแบบและผลิตกล่องกระดาษลูกฟูกและวัสดุบรรจุภัณฑ์ตามสั่ง.",
       heroTail:
         "รองรับตั้งแต่ล็อตทดลองจำนวนน้อยไปจนถึงการผลิตจำนวนมากอย่างยืดหยุ่นตามความต้องการ.",
       heroIntroLine:
@@ -1211,8 +1210,7 @@ export const copy: Record<string, CopyBundle> = {
     stores: {
       heroTitle: `${site.name} ─ نبذة عن الشركة`,
       heroAreas: "مدينة كادوما، أوساكا (اليابان)",
-      heroLead:
-        "تصميم وتصنيع صناديق الكرتون المضلع ومواد التغليف حسب الطلب.",
+      heroLead: "تصميم وتصنيع صناديق الكرتون المضلع ومواد التغليف حسب الطلب.",
       heroTail:
         "بدءًا من الدفعات التجريبية الصغيرة وحتى الإنتاج الكمي، نستجيب لاحتياجاتكم في التغليف بكل مرونة.",
       heroIntroLine:
@@ -1344,8 +1342,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Sitio oficial",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "Cajas de cartón ondulado y embalajes desde Kadoma (Osaka)",
+    areaLinkText: "Cajas de cartón ondulado y embalajes desde Kadoma (Osaka)",
     rights: "Todos los derechos reservados.",
   },
   de: {
@@ -1355,8 +1352,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Offizielle Website",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "Wellpappkartons & Verpackungslösungen aus Kadoma (Osaka)",
+    areaLinkText: "Wellpappkartons & Verpackungslösungen aus Kadoma (Osaka)",
     rights: "Alle Rechte vorbehalten.",
   },
   pt: {
@@ -1366,8 +1362,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Site oficial",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "Caixas de papelão ondulado e embalagens de Kadoma (Osaka)",
+    areaLinkText: "Caixas de papelão ondulado e embalagens de Kadoma (Osaka)",
     rights: "Todos os direitos reservados.",
   },
   it: {
@@ -1377,8 +1372,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Sito ufficiale",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "Scatole in cartone ondulato e imballaggi da Kadoma (Osaka)",
+    areaLinkText: "Scatole in cartone ondulato e imballaggi da Kadoma (Osaka)",
     rights: "Tutti i diritti riservati.",
   },
   ru: {
@@ -1388,8 +1382,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Официальный сайт",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "Гофрокартоные коробки и упаковка из Кадомы (Осака)",
+    areaLinkText: "Гофрокартоные коробки и упаковка из Кадомы (Осака)",
     rights: "Все права защищены.",
   },
   th: {
@@ -1399,8 +1392,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "เว็บไซต์ทางการ",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "กล่องลูกฟูกและบรรจุภัณฑ์จากเมืองคะโดะมะ (โอซาก้า)",
+    areaLinkText: "กล่องลูกฟูกและบรรจุภัณฑ์จากเมืองคะโดะมะ (โอซาก้า)",
     rights: "สงวนลิขสิทธิ์",
   },
   vi: {
@@ -1410,8 +1402,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Trang chính thức",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "Hộp carton & giải pháp bao bì từ Kadoma (Osaka)",
+    areaLinkText: "Hộp carton & giải pháp bao bì từ Kadoma (Osaka)",
     rights: "Mọi quyền được bảo lưu.",
   },
   id: {
@@ -1421,8 +1412,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "Situs resmi",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "Karton bergelombang & kemasan dari Kadoma (Osaka)",
+    areaLinkText: "Karton bergelombang & kemasan dari Kadoma (Osaka)",
     rights: "Hak cipta dilindungi.",
   },
   hi: {
@@ -1432,8 +1422,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "LINE",
     siteAria: "आधिकारिक वेबसाइट",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "कडोमा (ओसाका) से गत्ते के बॉक्स व पैकेजिंग",
+    areaLinkText: "कडोमा (ओसाका) से गत्ते के बॉक्स व पैकेजिंग",
     rights: "सर्वाधिकार सुरक्षित।",
   },
   ar: {
@@ -1443,8 +1432,7 @@ export const FOOTER_STRINGS: Record<string, FooterI18n> = {
     lineAlt: "لاين",
     siteAria: "الموقع الرسمي",
     siteAlt: footerAlt(site.name),
-    areaLinkText:
-      "صناديق كرتون مضلع وحلول تغليف من كادوما (أوساكا)",
+    areaLinkText: "صناديق كرتون مضلع وحلول تغليف من كادوما (أوساكا)",
     rights: "جميع الحقوق محفوظة.",
   },
 };
