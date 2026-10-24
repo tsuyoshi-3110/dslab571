@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { SITE_KEY } from "@/lib/atoms/siteKeyAtom";
 
 export default function ReturnClient() {
   const sp = useSearchParams();
   const router = useRouter();
-  const sellerId = sp.get("sellerId") || "default"; // 必要に応じて siteKey 等に変更
+  // create-onboarding-link は return_url に siteKey を付けて戻す
+  const sellerId = sp.get("siteKey") || sp.get("sellerId") || SITE_KEY;
 
   const [msg, setMsg] = useState("確認中…");
 
@@ -16,18 +18,18 @@ export default function ReturnClient() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/stripe/sync-onboarding", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sellerId }),
-          cache: "no-store",
-        });
+        // 管理画面と同じ判定（Stripe のアカウント状態を見て Firestore にも反映する）
+        const res = await fetch(
+          `/api/sellers/connect-status?siteKey=${encodeURIComponent(sellerId)}`,
+          { cache: "no-store" }
+        );
 
         const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "failed");
 
         if (!isActive) return;
 
-        if (data.onboardingCompleted) {
+        if (data.status === "completed") {
           setMsg("連携が完了しました！");
           clearInterval(interval);
         } else if (retryCount >= 5) {
